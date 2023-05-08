@@ -157,3 +157,44 @@ moveBtn.onclick = function(){
  cancelBtn.onclick = function(){
     moveCommand.undo();
  }
+
+ /**
+  * 宏命令
+  */
+let closeDoorCommand = {
+    execute: () => {
+        console.log('关门');
+    }
+}
+
+let openPCCommand = {
+    execute: () => {
+        console.log('打开电脑');
+    }
+}
+
+let openQQCommand = {
+    execute: () => {
+        console.log('打开QQ');
+    }
+}
+
+const MacroCommand = () => {
+    return {
+        commandsList: [],
+        add: (command) => {
+            this.commandsList.push(command);
+        },
+        execute: () => {
+            for(let i = 0, command; command = this.commandsList[i++];){
+                command.execute();
+            }
+        }
+    }
+}
+
+const macroCommand = MacroCommand();
+macroCommand.add(closeDoorCommand);
+macroCommand.add(openPCCommand);
+macroCommand.add(openQQCommand);
+macroCommand.execute();
