@@ -137,3 +137,50 @@ coffee2.init();
   
   const tea3 = new Tea();
   tea.prepareBeverage();
+
+/**
+ * 带钩子方法
+ */
+class Beverage {
+  constructor(){};
+
+  boilWater = () => {console.log('煮沸水')};
+
+  brew = () => {}
+
+  addCondiments = () => {}
+
+  customerWantsCondiments = () => {
+    // 钩子方法 - 默认true
+    return true
+  }
+
+  init = () => {
+      this.boilWater();
+      this.brew();
+      if(this.customerWantsCondiments()){
+        this.addCondiments();
+      }
+  }
+}
+
+class CoffeeWithHook extends Beverage {
+  boilWater() {
+    console.log('Boiling water for coffee');
+  }
+
+  brew() {
+    console.log('Brewing coffee');
+  }
+
+  addCondiments() {
+    console.log('Adding milk and sugar to coffee');
+  }
+
+  customerWantsCondiments (){
+    return window.confirm('请问需要调料吗？');
+  }
+}
+
+const coffeeWithHook = new CoffeeWithHook();
+coffeeWithHook.init();
