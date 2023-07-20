@@ -111,3 +111,38 @@ const playerFactor2 = function (name, teamColor) {
 // 实现中介者 - 两种实现本质上没区别 - demo是第二种
 // 1. 通过发布-订阅模式。Director为订阅者，各Player发布者
 // 2. 在playerDirctor中开放一些接收消息的接口，player主动向director发送消息，director收到之后会进行处理并通过引用的其他player对象进行反馈
+
+const playDirector = (function(){
+    // 保存所有玩家
+    let players = {};
+    // 可以执行的操作
+    let operations = {};
+
+    operations.addPlayer = function(player){
+        const teamColor = player.teamColor;
+        players[teamColor] = players[teamColor] || [];
+        players[teamColor].push(player);
+    }
+
+    operations.removePlayer = function(player){
+        //...删除逻辑
+    }
+
+    operations.changeTeam = function(player){
+        //...变队逻辑
+    }
+
+    operations.playerDead = function(player){
+        //...玩家死亡逻辑 - 需要判断是否队伍全部死亡，是的话另一对获胜
+    }
+
+    const ReceiveMessage = function(){
+        // 获取第一个参数为消息名称
+        const msg = Array.prototype.shift.call(arguments);
+        operations[msg].apply(this, arguments);
+    }
+
+    return {
+        ReceiveMessage
+    }
+})();
