@@ -199,7 +199,7 @@ class Upload {
             case 'error':
                 this.button1.inner = '上传失败';
                 break;
-            case 'uploading':
+            case 'del':
                 this.plugin.del();
                 this.dom.parentNode.removeChild(this.dom);
                 console.log('删除完成')
@@ -224,3 +224,130 @@ setTimeout(() => {
 setTimeout(() => {
     uploadObj.changeState('done')
 }, 5000)
+
+/**
+ * 状态模式重构文件上传
+ */
+ class Upload {
+    constructor(fileName) {
+        this.plugin = plugin;
+        this.fileName = fileName;
+        this.button1 = null;
+        this.button2 = null;
+        
+        this.signState = new SignState(this);
+        this.uploadingState = new UploadingState(this);
+        this.pauseState = new PauseState(this);
+        this.doneState = new DoneState(this);
+        this.errorState = new ErrorState(this);
+        // 设置初始状态
+        this.currState = this.signState;
+    }
+
+    // 不用改变，仍然负责创建DOM与绑定事件
+    init() {
+        let that = this;
+        this.dom = document.createElement('div');
+        this.dom.innerHTML = '<span>文件名称:' + this.fileName + '</span>' + '<button data-action="button1">扫描中</button>' + '<button data-action="button2">删除</button>'
+        document.body.appendChild(this.dom);
+        this.button1 = this.dom.querySelector('[data-action="button1"]');
+        this.button2 = this.dom.querySelector('[data-action="button2"]');
+        this.bindEvent();
+    }
+
+    // 按钮绑定事件 - 不再自己处理而是委托给状态类
+    bindEvent() {
+        let self = this;
+        this.button1.onclick = function () {
+            self.currState.clickHandler1();
+        }
+
+        this.button2.onclick = function () {
+            self.currState.clickHandler2();
+        }
+    }
+
+    // 把状态对应的逻辑行为放在这里
+    sign(){
+        this.plugin.sign();
+        this.currState = this.signState;
+    }
+
+    uploading(){
+        this.plugin.uploading();
+        this.button1.inner = '正在上传点击暂停';
+        this.currState = this.uploadingState;
+    }
+
+    pause(){
+        this.plugin.pause();
+        this.button1.inner = '已暂停，点击继续上传';
+        this.currState = this.pauseState;
+    }
+
+    done(){
+        this.plugin.done();
+        this.button1.inner = '上传完成';
+        this.currState = this.doneState;
+    }
+
+    error(){
+        this.button1.inner = '上传失败';
+        this.currState = this.errorState;
+    }
+
+    del(){
+        this.plugin.del();
+        this.dom.parentNode.removeChild(this.dom);
+        console.log('删除完成')
+    }
+}
+
+// 编写状态类实现
+
+const StateFactory = (function(){
+    class State {
+        constructor() { }
+        clickHandler1() {
+            throw new Error('handler1是必要的');
+        }
+        clickHandler2() {
+            throw new Error('handler2是必要的');
+        }
+    }
+
+
+
+    return function(param){
+        class F {
+            constructor(uploadObj) {
+                this.uploadObj = uploadObj;
+            }
+        }
+        F.prototype = new State();
+        for(let i in param){
+            F.prototype[i] = param[i]
+        };
+        return F;
+    }
+})()
+
+const SignState = StateFactory({
+    clickHandler1: function(){
+        console.log('扫描中，点击无效')
+    },
+    clickHandler2: function(){
+        console.log('扫描中，删除无效')
+    }
+});
+
+const UploadingState = StateFactory({
+    clickHandler1: function(){
+        this.uploadObj.pause();
+    },
+    clickHandler2: function(){
+        console.log('上传中，不能删除')
+    }
+})
+
+// ...
