@@ -228,13 +228,13 @@ setTimeout(() => {
 /**
  * 状态模式重构文件上传
  */
- class Upload {
+class Upload {
     constructor(fileName) {
         this.plugin = plugin;
         this.fileName = fileName;
         this.button1 = null;
         this.button2 = null;
-        
+
         this.signState = new SignState(this);
         this.uploadingState = new UploadingState(this);
         this.pauseState = new PauseState(this);
@@ -268,35 +268,35 @@ setTimeout(() => {
     }
 
     // 把状态对应的逻辑行为放在这里
-    sign(){
+    sign() {
         this.plugin.sign();
         this.currState = this.signState;
     }
 
-    uploading(){
+    uploading() {
         this.plugin.uploading();
         this.button1.inner = '正在上传点击暂停';
         this.currState = this.uploadingState;
     }
 
-    pause(){
+    pause() {
         this.plugin.pause();
         this.button1.inner = '已暂停，点击继续上传';
         this.currState = this.pauseState;
     }
 
-    done(){
+    done() {
         this.plugin.done();
         this.button1.inner = '上传完成';
         this.currState = this.doneState;
     }
 
-    error(){
+    error() {
         this.button1.inner = '上传失败';
         this.currState = this.errorState;
     }
 
-    del(){
+    del() {
         this.plugin.del();
         this.dom.parentNode.removeChild(this.dom);
         console.log('删除完成')
@@ -305,7 +305,7 @@ setTimeout(() => {
 
 // 编写状态类实现
 
-const StateFactory = (function(){
+const StateFactory = (function () {
     class State {
         constructor() { }
         clickHandler1() {
@@ -318,14 +318,14 @@ const StateFactory = (function(){
 
 
 
-    return function(param){
+    return function (param) {
         class F {
             constructor(uploadObj) {
                 this.uploadObj = uploadObj;
             }
         }
         F.prototype = new State();
-        for(let i in param){
+        for (let i in param) {
             F.prototype[i] = param[i]
         };
         return F;
@@ -333,21 +333,106 @@ const StateFactory = (function(){
 })()
 
 const SignState = StateFactory({
-    clickHandler1: function(){
+    clickHandler1: function () {
         console.log('扫描中，点击无效')
     },
-    clickHandler2: function(){
+    clickHandler2: function () {
         console.log('扫描中，删除无效')
     }
 });
 
 const UploadingState = StateFactory({
-    clickHandler1: function(){
+    clickHandler1: function () {
         this.uploadObj.pause();
     },
-    clickHandler2: function(){
+    clickHandler2: function () {
         console.log('上传中，不能删除')
     }
 })
 
 // ...
+
+
+/**
+ * JS字面量配置状态
+ */
+class Light {
+    constructor() {
+        this.button = null;
+        this.state = FSM.off;
+    }
+
+    init() {
+        const button = document.createElement('button');
+        const self = this;
+        button.innerHTML = '以关灯';
+        this.button = document.body.appendChild(button);
+        this.button.onclick = function () {
+            // 委托给FSM状态机
+            self.currState.buttonWasPressed.call(self);
+        }
+    }
+}
+
+const FSM = {
+    off: {
+        buttonWasPressed: function () {
+            console.log('关灯');
+            this.button.innerHTML = '下次按我开灯';
+            this.currState = FSM.on;
+        }
+    },
+    on: {
+        buttonWasPressed: function () {
+            console.log('开灯');
+            this.button.innerHTML = '下次按我关灯';
+            this.currState = FSM.off;
+        }
+    }
+}
+
+/**
+ * 表驱动
+ */
+const fsm = StateMachine.create({
+    initial: 'off',
+    events: [
+        { name: 'buttonWasPressed', from: 'off', to: 'on' },
+        { name: 'buttonWasPressed', from: 'on', to: 'off' },
+    ],
+    callbacks: {
+        onbuttonWasPressed: function (event, from, to) {
+            console.log(arguments);
+        }
+    },
+    error: function (event, from, to, errorCode, errorMessage) {
+        // 状态切换实现不了
+        console.log(arguments);
+    }
+})
+
+button.onclick = function () {
+    fsm.buttonWasPressed();
+}
+
+/**
+ * 游戏动作举例
+ */
+const GameFSM = {
+    walk: {
+        attack: function () {
+            console.log('攻击')
+        },
+        defense: function () {
+            console.log('防御')
+        }
+    },
+    attack: {
+        walk: function () {
+            console.log('攻击时不能走动')
+        },
+        defense: function () {
+            console.log('攻击时不能防御')
+        }
+    }
+}
