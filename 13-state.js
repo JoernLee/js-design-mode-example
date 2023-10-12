@@ -212,7 +212,7 @@ class Upload {
 const uploadObj = new Upload('JS设计模式文件');
 uploadObj.init();
 
-window.external.upload = (state){
+window.external.upload = function(state){
     // 插件调用JS方法
     uploadObj.changeState(state);
 }
